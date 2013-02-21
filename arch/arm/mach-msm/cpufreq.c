@@ -49,6 +49,10 @@ struct cpu_freq {
 
 static DEFINE_PER_CPU(struct cpu_freq, cpu_freq_info);
 
+#ifdef CONFIG_TURBO_BOOST
+#define STOCK_CPU_MAX_SPEED	1512000	
+#endif
+
 static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq)
 {
 	int ret = 0;
@@ -66,6 +70,13 @@ static int set_cpu_freq(struct cpufreq_policy *policy, unsigned int new_freq)
 			pr_debug("min: limiting freq to %d\n", new_freq);
 		}
 	}
+
+#ifdef CONFIG_TURBO_BOOST
+	if (num_online_cpus() > 2) {
+		if (new_freq > STOCK_CPU_MAX_SPEED)
+			new_freq = STOCK_CPU_MAX_SPEED;
+	}
+#endif
 
 	freqs.old = policy->cur;
 	freqs.new = new_freq;
