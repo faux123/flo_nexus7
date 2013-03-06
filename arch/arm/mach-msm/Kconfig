@@ -1665,7 +1665,7 @@ config OC_ULTIMATE
 config TURBO_BOOST
 	bool "Enable CPU Turbo boost option"
 	depends on CPU_OVERCLOCK
-	default n
+	default y
 	help
 	  This option allows overclocking of 2 cores to higher clock rate
 	  than stock maximum.  When more than 2 cores are active, the clock
