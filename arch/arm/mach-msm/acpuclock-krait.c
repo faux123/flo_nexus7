@@ -90,20 +90,10 @@ static void __cpuinit set_sec_clk_src(struct scalable *sc, u32 sec_src_sel)
 {
 	u32 regval;
 
-	/* 8064 Errata: disable sec_src clock gating during switch. */
 	regval = get_l2_indirect_reg(sc->l2cpmr_iaddr);
-	regval |= SECCLKAGD;
-	set_l2_indirect_reg(sc->l2cpmr_iaddr, regval);
-
-	/* Program the MUX */
 	regval &= ~(0x3 << 2);
 	regval |= ((sec_src_sel & 0x3) << 2);
 	set_l2_indirect_reg(sc->l2cpmr_iaddr, regval);
-
-	/* 8064 Errata: re-enabled sec_src clock gating. */
-	regval &= ~SECCLKAGD;
-	set_l2_indirect_reg(sc->l2cpmr_iaddr, regval);
-
 	/* Wait for switch to complete. */
 	mb();
 	udelay(1);
