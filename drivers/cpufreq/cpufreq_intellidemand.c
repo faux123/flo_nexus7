@@ -1743,7 +1743,7 @@ static void dbs_input_event(struct input_handle *handle, unsigned int type,
 #if 1
 static int input_dev_filter(const char *input_dev_name)
 {
-	if (strstr(input_dev_name, "touchscreen") ||
+	if (strstr(input_dev_name, "elan-touchscreen") ||
 		strstr(input_dev_name, "-keypad") ||
 		strstr(input_dev_name, "-nav") ||
 		strstr(input_dev_name, "-oj")) {
