@@ -158,7 +158,7 @@ static struct dbs_tuners {
 	.powersave_bias = 0,
 	.sync_freq = DBS_SYNC_FREQ,
 	.optimal_freq = DBS_OPTIMAL_FREQ,
-	.sampling_rate = (MICRO_FREQUENCY_MIN_SAMPLE_RATE * 5)
+	.sampling_rate = (MICRO_FREQUENCY_MIN_SAMPLE_RATE * 5),
 	.input_boost = 0,
 };
 
