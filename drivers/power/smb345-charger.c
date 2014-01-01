@@ -40,6 +40,10 @@
 #include <asm/uaccess.h>
 #include <asm/mach-types.h>
 
+#ifdef CONFIG_FORCE_FAST_CHARGE
+#include <linux/fastchg.h>
+#endif
+
 #define smb345_CHARGE		0x00
 #define smb345_CHRG_CRNTS	0x01
 #define smb345_VRS_FUNC		0x02
@@ -342,6 +346,10 @@ smb345_set_InputCurrentlimit(struct i2c_client *client, u32 current_setting)
 {
 	int ret = 0, retval;
 	u8 setting = 0;
+
+#ifdef CONFIG_FORCE_FAST_CHARGE
+	pr_info("current charge current => %d\n", current_setting);
+#endif
 
 	wake_lock(&charger_wakelock);
 
@@ -859,8 +867,48 @@ int usb_cable_type_detect(unsigned int chgr_type)
 
 		if (chgr_type == CHARGER_SDP) {
 			SMB_NOTICE("Cable: SDP\n");
+#ifdef CONFIG_FORCE_FAST_CHARGE
+			if (force_fast_charge == 1)
+				smb345_set_InputCurrentlimit(client, 1200);
+			else if (force_fast_charge == 2) {
+				switch (fast_charge_level) {
+				case FAST_CHARGE_500:
+					smb345_set_InputCurrentlimit(client, 500);
+					break;
+				case FAST_CHARGE_700:
+					smb345_set_InputCurrentlimit(client, 700);
+					break;
+				case FAST_CHARGE_900:
+					smb345_set_InputCurrentlimit(client, 900);
+					break;
+				case FAST_CHARGE_1200:
+					smb345_set_InputCurrentlimit(client, 1200);
+					break;
+				case FAST_CHARGE_1800:
+					smb345_set_InputCurrentlimit(client, 1800);
+					break;
+				case FAST_CHARGE_2000:
+					smb345_set_InputCurrentlimit(client, 2000);
+					break;
+				default:
+					break;
+				}
+			}
+#endif
 			smb345_vflt_setting();
+#ifdef CONFIG_FORCE_FAST_CHARGE
+			if (force_fast_charge > 0)
+				if (fast_charge_level == FAST_CHARGE_500)
+					success =
+						bq27541_battery_callback(usb_cable);
+				else
+					success =
+						bq27541_battery_callback(ac_cable);
+			else
+				success =  bq27541_battery_callback(usb_cable);
+#else
 			success =  bq27541_battery_callback(usb_cable);
+#endif
 			touch_callback(usb_cable);
 		} else {
 			if (chgr_type == CHARGER_CDP) {
@@ -878,7 +926,34 @@ int usb_cable_type_detect(unsigned int chgr_type)
 				touch_callback(usb_cable);
 				goto done;
 			}
+#ifdef CONFIG_FORCE_FAST_CHARGE
+			if (force_fast_charge == 2) {
+				switch (fast_charge_level) {
+				case FAST_CHARGE_500:
+					smb345_set_InputCurrentlimit(client, 500);
+					break;
+				case FAST_CHARGE_700:
+					smb345_set_InputCurrentlimit(client, 700);
+					break;
+				case FAST_CHARGE_900:
+					smb345_set_InputCurrentlimit(client, 900);
+					break;
+				case FAST_CHARGE_1200:
+					smb345_set_InputCurrentlimit(client, 1200);
+					break;
+				case FAST_CHARGE_1800:
+					smb345_set_InputCurrentlimit(client, 1800);
+					break;
+				case FAST_CHARGE_2000:
+					smb345_set_InputCurrentlimit(client, 2000);
+					break;
+				default:
+					break;
+				}
+			}
+#else
 			smb345_set_InputCurrentlimit(client, 1200);
+#endif
 			smb345_vflt_setting();
 			success =  bq27541_battery_callback(ac_cable);
 			touch_callback(ac_cable);
