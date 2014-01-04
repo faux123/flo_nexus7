@@ -2659,6 +2659,12 @@ config MSM_CACHE_DUMP
 	  This allows for analysis of the caches in case cache corruption is
 	  suspected.
 
+config UPDATE_LCDC_LUT
+        bool "Set initial Qualcomm LCDC lut"
+        default n
+        help
+          Set initial Qualcomm LCDC Look Up Table.
+
 config MSM_CACHE_DUMP_ON_PANIC
 	bool "Dump caches on panic"
 	depends on MSM_CACHE_DUMP
