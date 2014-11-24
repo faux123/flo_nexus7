@@ -22,6 +22,7 @@
 #include "kgsl.h"
 #include "kgsl_pwrscale.h"
 #include "kgsl_device.h"
+#include "kgsl_trace.h"
 
 #ifdef CONFIG_MSM_KGSL_SIMPLE_GOV
 #include <linux/module.h>
@@ -152,7 +153,8 @@ static void tz_wake(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale)
 #else
 		priv->governor == TZ_GOVERNOR_ONDEMAND)
 #endif
-		kgsl_pwrctrl_pwrlevel_change(device,
+		if (device->pwrctrl.constraint.type == KGSL_CONSTRAINT_NONE)
+			kgsl_pwrctrl_pwrlevel_change(device,
 					device->pwrctrl.default_pwrlevel);
 }
 
@@ -222,11 +224,13 @@ static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale)
 		(priv->bin.total_time < FLOOR))
 		return;
 
-	/* If there is an extended block of busy processing,
-	 * increase frequency.  Otherwise run the normal algorithm.
+	/* If there is an extended block of busy processing, set
+	 * frequency to turbo.  Otherwise run the normal algorithm.
 	 */
 	if (priv->bin.busy_time > CEILING) {
-		val = -1;
+		val = 0;
+		kgsl_pwrctrl_pwrlevel_change(device,
+				KGSL_PWRLEVEL_TURBO);
 	} else if (priv->idle_dcvs) {
 		idle = priv->bin.total_time - priv->bin.busy_time;
 		idle = (idle > 0) ? idle : 0;
@@ -263,9 +267,21 @@ static void tz_idle(struct kgsl_device *device, struct kgsl_pwrscale *pwrscale)
 	 */
 	if (val > 0)
 		val *= pwr->step_mul;
-	if (val)
+
+	if ((pwr->constraint.type == KGSL_CONSTRAINT_NONE) ||
+			(time_after(jiffies, pwr->constraint.expires))) {
+
 		kgsl_pwrctrl_pwrlevel_change(device,
 					     pwr->active_pwrlevel + val);
+		if (pwr->constraint.type != KGSL_CONSTRAINT_NONE) {
+			/* Trace the constraint being un-set by the driver */
+			trace_kgsl_constraint(device,
+				pwr->constraint.type,
+				pwr->active_pwrlevel, 0);
+			/*Invalidate the constraint set */
+			pwr->constraint.type = KGSL_CONSTRAINT_NONE;
+		}
+	}
 }
 
 static void tz_busy(struct kgsl_device *device,
